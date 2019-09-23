@@ -58,16 +58,18 @@ fn report(result: Option<Mistake>) {
 fn should_have_semicolon(line: &str) -> Option<usize> {
     let line = line.trim_end();
     let len = line.len();
+    
+    if len == 0 { return None; }
 
     let char = line.chars().last().expect("No last char");
 
-    // this will need to be updated to check if the 
-    // { or } belongs to a for or if statement 
     let rv = match char as u8 {
         b';' | b'{' | b'}' => None,
         _ => Some(len),
-    };
+    };     
 
+    // this will need to be updated to check if the 
+    // { or } belongs to a for or if statement 
     rv
 }
 
