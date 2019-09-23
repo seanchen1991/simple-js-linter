@@ -1,10 +1,12 @@
 use std::io;
 use std::fs;
 use std::fmt;
+use std::env;
 use std::io::Error as E;
 
+// mistake indicating a missing semicolon
 struct Mistake {
-    path: &'static str,
+    path: String,
     text: String,
     locations: Vec<usize>,
 }
@@ -51,9 +53,32 @@ fn report(result: Option<Mistake>) {
     }
 }
 
-fn check(path: &'static str) -> Result<Option<Mistake>, E> {
-    let text = fs::read_to_string(path)?;
-    let locations: Vec<_> = text.match_indices(",").map(|(index, _)| index).collect();
+// checks the line and determines if it should have a ; at the end 
+// if it should, returns an option with the index where the ; should be
+fn should_have_semicolon(line: &str) -> Option<usize> {
+    let line = line.trim_end();
+    let len = line.len();
+
+    let char = line.chars().last().expect("No last char");
+
+    // this will need to be updated to check if the 
+    // { or } belongs to a for or if statement 
+    let rv = match char as u8 {
+        b';' | b'{' | b'}' => None,
+        _ => Some(len),
+    };
+
+    rv
+}
+
+fn lint(path: String) -> Result<Option<Mistake>, E> {
+    let text = fs::read_to_string(&path)?;
+    
+    // check for newlines not preceded by a ;
+    let locations: Vec<_> = text
+        .lines()
+        .filter_map(|line| should_have_semicolon(line))
+        .collect();
 
     Ok(if locations.is_empty() {
         None
@@ -66,20 +91,16 @@ fn check(path: &'static str) -> Result<Option<Mistake>, E> {
     })
 }
 
-fn main() -> Result<(), io::Error>{
-    let paths = ["sample4.txt"];
+fn main() -> Result<(), io::Error> {
+    // read in the name of the file from stdin
+    let filename = env::args().nth(0).expect("No filename given");
 
-    // check all documents
-    let mut results = vec![];
-    for path in &paths {
-        let result = check(path)?;
-        results.push(result);
-    }
-
-    // report all results
-    for result in results {
-        report(result);
-    }
+    // for now, we'll only allow the ability to lint a single
+    // input file at a time 
+    let result = lint(filename)?;
+    
+    // report the result of linting the file
+    report(result);
 
     Ok(())
 }

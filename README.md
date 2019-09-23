@@ -7,3 +7,4 @@ As a first pass, this linter checks specifically for the following:
  - [] Checks for proper spacing, i.e., space between `if` and the following
  parentheses.
  - [] Proper usage of `let` and `const` for variable declarations.
+ - [] Checks for unused variables.
